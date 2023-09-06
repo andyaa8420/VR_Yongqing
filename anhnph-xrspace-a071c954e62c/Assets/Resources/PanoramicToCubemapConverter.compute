@@ -1,0 +1,433 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel GenerateFaces
+#pragma kernel ResolveSupersampling
+#pragma kernel DeinterlaceFaces
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+Texture2D<float4> PanoramicTexture;
+float4 panoramicResolution;
+SamplerState bilinear_clamp_sampler;/* {
+    MipFilter = LINEAR;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+};*/
+
+//Attempt 2
+sampler2D PanoramicTextureSampler = sampler_state {
+    Texture = <PanoramicTexture>;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;   
+    AddressU  = Clamp;
+    AddressV  = Clamp;
+};
+
+//This because "can't write to cubemaps as there is no "RWTextureCube" format".
+//So use 6 normal 2d textures, one for each face of the cubemap.
+RWTexture2D<float4> CUBE_Top; //y = 1
+RWTexture2D<float4> CUBE_Bottom; //y = -1
+RWTexture2D<float4> CUBE_Left; //x = -1
+RWTexture2D<float4> CUBE_Right; //x = 1
+RWTexture2D<float4> CUBE_Forward; //z = 1
+RWTexture2D<float4> CUBE_Backward; //z = -1
+int cubeMapResolution;
+
+static const double sin45deg = 0.70710678118654752440084436210485;
+static const double pi = 3.1415926535897932384626433832795;
+
+float slerp (float x, float a, float b) {
+	//https://stackoverflow.com/questions/23638758/whats-the-common-name-for-the-inverse-of-the-lerp-function
+	//fraction(x, a, b) = (x - a) / (b - a)
+
+	return ((x - a) / (b - a));
+}
+
+float2 AbsoluteToRelativeUnsigned (uint2 coord, int2 referenceResolution) {
+	return ((float2)coord / referenceResolution);
+}
+
+float2 AbsoluteToRelativeSigned (uint2 coord, int2 referenceResolution) {
+	//consider this fixed unless weird stuff happens.
+	return (coord - (referenceResolution / 2.0f)) / (referenceResolution / 2.0f);
+}
+
+uint2 RelativeSignedToAbsolute (float2 coord, int2 referenceResolution) {
+	//Obtained mathematically from the AbsoluteToRelativeSigned () function.
+	return 0.5f * referenceResolution * (coord + 1);
+}
+
+float2 RelativeUnsignedToAbsolute (float2 coord, int2 referenceResolution) {
+	return coord * referenceResolution;
+}
+
+uint2 RelativeUnsignedToAbsoluteInteger (float2 coord, int2 referenceResolution) {
+	return (uint2)(coord * referenceResolution);
+}
+
+float2 GenerateVectorFromAngleAndModule (float degAngle, float module) {
+	float radAngle = radians (degAngle);
+
+	return (float2 (cos (radAngle), sin (radAngle) * module));
+}
+
+float SmallestAngleBetweenVectors (float2 vectorA, float2 vectorB) {
+	float2 normalizedA = normalize (vectorA);
+	float2 normalizedB = normalize (vectorB);
+
+	//http://eguruchela.com/math/Calculator/2dvector-angle :
+	//angle = arccos(|v||w|v•w) 
+
+	return (acos (dot (normalizedA, normalizedB)));
+}
+
+float2 GetUvFromPosition (uint3 id, float3 position, float3 facePosition) {
+
+	//Determine what point of the sphere this pixel projects to
+	float3 projectedSpherePoint = normalize (position);
+	float verticalAngle = asin (projectedSpherePoint.y);
+
+	float horizontalAngle;
+	
+	horizontalAngle = SmallestAngleBetweenVectors (projectedSpherePoint.xz, float2 (1,0));
+
+	//this allows to have angles greater than 180 degrees.
+	if (projectedSpherePoint.z < 0)
+		horizontalAngle = radians (360) - horizontalAngle;
+
+	//slerp (inverselerp) is the process inverse to lerp. returns a value from 0 to 1 (float)
+	float relativeVerticalUnsignedCoordinate = slerp (degrees (verticalAngle), -90, 90); //90 and -90 are flipped because the cube textures have to be flipped vertically (otherwise the cubemap is upside-down)
+	float relativeHorizontalUnsignedCoordinate = slerp (degrees (horizontalAngle), 0, 360);
+
+	//angles determine what point of the texture to read, as the texture is "wrapped" in the shape of a sphere
+	//texture uv determination works like this:
+
+	//Top left: 0 degree horizontal, 90 vertical				Top right: 360 degree horizontal, 90 vertical
+
+	//Bottom left: 0 degree horizontal, -90 vertical			Bottom right: 360 degree horizontal, -90 vertical
+
+	//if bottom or top face flip faces vertically
+	if (abs (facePosition.y) != 1)
+		relativeVerticalUnsignedCoordinate = 1 - relativeVerticalUnsignedCoordinate;
+
+
+
+	float2 absoluteReadPosition = RelativeUnsignedToAbsolute (float2 (relativeHorizontalUnsignedCoordinate, relativeVerticalUnsignedCoordinate), panoramicResolution.xy);
+
+	//this corrects the direction, otherwise the images are mirrored horizontally
+	float2 signedRelativeReadPositionCorrected = AbsoluteToRelativeSigned (absoluteReadPosition, panoramicResolution.xy) * float2 (-1, 1);
+
+	//the "- float2 (1, 0)" part is necessary to remove a black vertical seam that would otherwise be present.
+	absoluteReadPosition = RelativeSignedToAbsolute (signedRelativeReadPositionCorrected, panoramicResolution.xy) - float2 (1, 0);
+
+	return absoluteReadPosition;
+}
+
+[numthreads(2,2,2)]
+void GenerateFaces (uint3 id : SV_DispatchThreadID) {
+
+	//new system: cube>sphere>angle>uv
+	//uses 1 thread to handle a single pixel on a single texture
+	
+	if (id.z == 0) {
+		//left
+		float2 signedRelativeUV = AbsoluteToRelativeSigned (id.xy, cubeMapResolution);
+		float3 worldPos = float3 (-1, signedRelativeUV.yx);
+		float2 absoluteReadPosition = GetUvFromPosition (id, worldPos, float3 (-1, 0, 0));
+		
+		CUBE_Left[id.xy] = PanoramicTexture.SampleLevel (bilinear_clamp_sampler, absoluteReadPosition / panoramicResolution.xy, 0); //filtered
+
+	} else if (id.z == 1) {
+		//right
+		//This face's sign has to be corrected or it's incorrect
+		float2 signedRelativeUV = AbsoluteToRelativeSigned (id.xy, cubeMapResolution) * float2 (-1, 1);
+		float3 worldPos = float3 (1, signedRelativeUV.yx);
+		float2 absoluteReadPosition = GetUvFromPosition (id, worldPos, float3 (1, 0, 0));
+		
+		CUBE_Right[id.xy] = PanoramicTexture.SampleLevel (bilinear_clamp_sampler, absoluteReadPosition / panoramicResolution.xy, 0); //filtered
+
+	} else if (id.z == 2) {
+		//forward
+		float2 signedRelativeUV = AbsoluteToRelativeSigned (id.xy, cubeMapResolution);
+		float3 worldPos = float3 (signedRelativeUV.xy, 1);
+		float2 absoluteReadPosition = GetUvFromPosition (id, worldPos, float3 (0, 0, 1));
+		
+		CUBE_Forward[id.xy] = PanoramicTexture.SampleLevel (bilinear_clamp_sampler, absoluteReadPosition / panoramicResolution.xy, 0); //filtered
+
+	} else if (id.z == 3) {
+		//backward
+		//This face's sign has to be corrected or it's incorrect
+		float2 signedRelativeUV = AbsoluteToRelativeSigned (id.xy, cubeMapResolution) * float2 (-1, 1);
+		float3 worldPos = float3 (signedRelativeUV.xy, -1);
+		float2 absoluteReadPosition = GetUvFromPosition (id, worldPos, float3 (0, 0, -1));
+		
+		CUBE_Backward[id.xy] = PanoramicTexture.SampleLevel (bilinear_clamp_sampler, absoluteReadPosition / panoramicResolution.xy, 0); //filtered
+
+	} else if (id.z == 4) {
+		//top
+		float2 signedRelativeUV = AbsoluteToRelativeSigned (id.xy, cubeMapResolution);
+		float3 worldPos = float3 (signedRelativeUV.x, 1, signedRelativeUV.y);
+		float2 absoluteReadPosition = GetUvFromPosition (id, worldPos, float3 (0, 1, 0));
+
+		//CUBE_Top[id.xy] = PanoramicTexture[absoluteReadPosition];
+		CUBE_Top[id.xy] = PanoramicTexture.SampleLevel (bilinear_clamp_sampler, absoluteReadPosition / panoramicResolution.xy, 0); //filtered
+
+	} else if (id.z == 5) {
+		//bottom
+		//This face's sign has to be corrected or it's incorrect
+		float2 signedRelativeUV = AbsoluteToRelativeSigned (id.xy, cubeMapResolution) * float2 (1, -1);
+		float3 worldPos = float3 (signedRelativeUV.x, -1, signedRelativeUV.y);
+		float2 absoluteReadPosition = GetUvFromPosition (id, worldPos, float3 (0, -1, 0));
+
+		//CUBE_Bottom[id.xy] = PanoramicTexture[absoluteReadPosition]; //float4 (absoluteReadPosition.xy / cubeMapResolution.xx, 0, 1); 
+		CUBE_Bottom[id.xy] = PanoramicTexture.SampleLevel (bilinear_clamp_sampler, absoluteReadPosition / panoramicResolution.xy, 0); //filtered
+
+	}
+
+
+
+	//old system: center>sphere>cube>uv
+	//uses 1 thread per panoramic texture pixel
+
+	//Determine what part of cubemap this pixel is on.
+
+	/*
+	bool isTop = (AbsoluteToRelativeSigned (id.xy, panoramicResolution.xy).y > sin45deg);
+	bool isBottom = (AbsoluteToRelativeSigned (id.xy, panoramicResolution.xy).y < -sin45deg);
+
+	bool isLeft = ((int)id.x < (int)panoramicResolution.x * 0.25);
+	bool isForward = (((int)id.x >= (panoramicResolution.x * 0.25)) && ((int)id.x < (panoramicResolution.x * 0.5)));
+	bool isRight = (((int)id.x >= (panoramicResolution.x * 0.5)) && ((int)id.x < (panoramicResolution.x * 0.75)));
+	bool isBack = ((int)id.x > (int)panoramicResolution.x * 0.75);
+
+	if (isTop) {
+		//complicated
+		//CUBE_Top[uint2 (1,1)] = float4 (0.5, 1, 0.5, 1);
+
+		float degAngle = lerp (0.0f, 360.0f, (id.x / panoramicResolution.x));
+		float2 relativePixelCoordinate = AbsoluteToRelativeSigned (id.xy, panoramicResolution.xy);
+
+		float relativeDistanceFromCenter = (relativePixelCoordinate.y - sin45deg) * (1 / (1 - sin45deg));
+
+		float2 relativeWriteCoord = GenerateVectorFromAngleAndModule (degAngle, relativeDistanceFromCenter) * float2 (1, -1);
+
+		int2 faceWritePos = RelativeSignedToAbsolute (relativeWriteCoord, cubeMapResolution.xx);
+
+		CUBE_Top[faceWritePos] = PanoramicTexture[id.xy] + float4 (0, 0, 0, 0.001);
+
+	} else if (isBottom) {
+		//Complicated
+		//CUBE_Bottom[uint2 (1,1)] = float4 (0.5, 0, 0.5, 1);
+	} else if (isLeft) {
+																												//CUBE_Left[uint2 (1,1)] = float4 (0, 0.5, 0.5, 1);  //CUBE_Left[id.xy] = float4 (AbsoluteToRelativeUnsigned (id.xy, panoramicResolution.xy), 0, 1); //x = -1   //new angle calculation (spherical)   //float axialProjectionAngle = (asin (length(AbsoluteToRelativeSigned (id.xy, cubeMapResolution)))); //?   //old angle calculation   //double verticalProjectionAngle = asin (AbsoluteToRelativeSigned (id.xy, cubeMapResolution).y);   //double horizontalProjectionAngle = -asin (AbsoluteToRelativeSigned (id.xy, cubeMapResolution).x);   //old   //float2 relativeTextureCoordinate = float2 (tan (horizontalProjectionAngle), tan (verticalProjectionAngle));   //Raw uv   //float2 relativeTextureCoordinateRaw = float2 (AbsoluteToRelativeSigned (id.xy, cubeMapResolution.xx)) * float2 (-1.0f, 1);
+		float2 relativeCoordinate = AbsoluteToRelativeSigned (id.xy, panoramicResolution.xy);
+		uint2 writePixelCoordinate = uint2 ((uint)cubeMapResolution - id.x, RelativeSignedToAbsolute (relativeCoordinate * (panoramicResolution.y / (panoramicResolution.y * sin45deg)), panoramicResolution.xy).y);										//RelativeSignedToAbsolute (relativeTextureCoordinateRaw, cubeMapResolution.xx);
+		CUBE_Left[writePixelCoordinate] = PanoramicTexture[id.xy] + float4 (0, 0, 0, 0.001);	
+		
+	} else if (isForward) {
+																												//CUBE_Forward[uint2 (1,1)] = float4 (0.5, 0.5, 1, 1);   //CUBE_Forward[id.xy - int2 (cubeMapResolution, 0)] = float4 (AbsoluteToRelativeUnsigned (id.xy, panoramicResolution.xy), 0, 1);   double verticalProjectionAngle = asin (AbsoluteToRelativeSigned (id.xy - float2 (cubeMapResolution, 0), cubeMapResolution).y);   double horizontalProjectionAngle = -asin (AbsoluteToRelativeSigned (id.xy - float2 (cubeMapResolution, 0), cubeMapResolution).x);   float2 relativeTextureCoordinate = float2 (tan (horizontalProjectionAngle), tan (verticalProjectionAngle));       //Raw uv   float2 relativeTextureCoordinateRaw = float2 (AbsoluteToRelativeSigned (id.xy - float2 (cubeMapResolution, 0), cubeMapResolution.xx)) * float2 (-1.0f, 1);
+		float2 relativeCoordinate = AbsoluteToRelativeSigned (id.xy, panoramicResolution.xy);
+		uint2 writePixelCoordinate = uint2 (cubeMapResolution * 2 - id.x, RelativeSignedToAbsolute (relativeCoordinate * (panoramicResolution.y / (panoramicResolution.y * sin45deg)), panoramicResolution.xy).y);									//RelativeSignedToAbsolute (relativeTextureCoordinateRaw, cubeMapResolution.xx);
+		CUBE_Forward[writePixelCoordinate] = PanoramicTexture[id.xy] + float4 (0, 0, 0, 0.001);
+
+	} else if (isRight) {
+																												//CUBE_Right[uint2 (1,1)] = float4 (1, 0.5, 0.5, 1);   //CUBE_Right[id.xy - int2 (cubeMapResolution, 0) * 2] = float4 (AbsoluteToRelativeUnsigned (id.xy, panoramicResolution.xy), 0, 1);      double verticalProjectionAngle = asin (AbsoluteToRelativeSigned (id.xy - 2 * float2 (cubeMapResolution, 0), cubeMapResolution).y);   double horizontalProjectionAngle = -asin (AbsoluteToRelativeSigned (id.xy - 2 * float2 (cubeMapResolution, 0), cubeMapResolution).x);   	float2 relativeTextureCoordinate = float2 (tan (horizontalProjectionAngle), tan (verticalProjectionAngle));      float2 relativeTextureCoordinateRaw = float2 (AbsoluteToRelativeSigned (id.xy - 2 * float2 (cubeMapResolution, 0), cubeMapResolution.xx)) * float2 (-1.0f, 1);
+		float2 relativeCoordinate = AbsoluteToRelativeSigned (id.xy, panoramicResolution.xy);
+		uint2 writePixelCoordinate = uint2 (cubeMapResolution * 3 - id.x, RelativeSignedToAbsolute (relativeCoordinate * (panoramicResolution.y / (panoramicResolution.y * sin45deg)), panoramicResolution.xy).y);									//RelativeSignedToAbsolute (relativeTextureCoordinateRaw, cubeMapResolution.xx);
+		CUBE_Right[writePixelCoordinate] = PanoramicTexture[id.xy] + float4 (0, 0, 0, 0.001);
+
+	} else if (isBack) {
+																												//CUBE_Backward[uint2 (1,1)] = float4 (0.5, 0.5, 0, 1);   //CUBE_Backward[id.xy - int2 (cubeMapResolution, 0) * 3] = float4 (AbsoluteToRelativeUnsigned (id.xy, panoramicResolution.xy), 0, 1);      double verticalProjectionAngle = asin (AbsoluteToRelativeSigned (id.xy - 3 * float2 (cubeMapResolution, 0), cubeMapResolution).y);   double horizontalProjectionAngle = -asin (AbsoluteToRelativeSigned (id.xy - 3 * float2 (cubeMapResolution, 0), cubeMapResolution).x);   float2 relativeTextureCoordinate = float2 (tan (horizontalProjectionAngle), tan (verticalProjectionAngle));      float2 relativeTextureCoordinateRaw = float2 (AbsoluteToRelativeSigned (id.xy - 3 * float2 (cubeMapResolution, 0), cubeMapResolution.xx)) * float2 (-1.0f, 1);
+		float2 relativeCoordinate = AbsoluteToRelativeSigned (id.xy, panoramicResolution.xy);
+		uint2 writePixelCoordinate = uint2 (cubeMapResolution * 4 - id.x, RelativeSignedToAbsolute (relativeCoordinate * (panoramicResolution.y / (panoramicResolution.y * sin45deg)), panoramicResolution.xy).y);									//RelativeSignedToAbsolute (relativeTextureCoordinateRaw, cubeMapResolution.xx);
+		CUBE_Backward[writePixelCoordinate] = PanoramicTexture[id.xy] + float4 (0, 0, 0, 0.001);
+
+	}
+	*/
+
+	/*
+	CUBE_Forward[uint2 (1,1)] = float4 (0.5, 0.5, 1, 1);
+	CUBE_Backward[uint2 (1,1)] = float4 (0.5, 0.5, 0, 1);
+	CUBE_Right[uint2 (1,1)] = float4 (1, 0.5, 0.5, 1);
+	CUBE_Left[uint2 (1,1)] = float4 (0, 0.5, 0.5, 1);
+	CUBE_Top[uint2 (1,1)] = float4 (0.5, 1, 0.5, 1);
+	CUBE_Bottom[uint2 (1,1)] = float4 (0.5, 0, 0.5, 1);
+	*/
+	
+	/*
+	CUBE_Top[id.xy] = float4 (AbsoluteToRelativeUnsigned (id.xy, cubeMapResolution), 0, 1); //y = 1
+	CUBE_Bottom[id.xy] = float4 (AbsoluteToRelativeUnsigned (id.xy, cubeMapResolution), 0, 1); //y = -1
+	CUBE_Left[id.xy] = float4 (AbsoluteToRelativeUnsigned (id.xy, cubeMapResolution), 0, 1); //x = -1
+	CUBE_Right[id.xy] = float4 (AbsoluteToRelativeUnsigned (id.xy, cubeMapResolution), 0, 1); //x = 1
+	CUBE_Forward[id.xy] = float4 (AbsoluteToRelativeUnsigned (id.xy, cubeMapResolution), 0, 1); //z = 1
+	CUBE_Backward[id.xy] = float4 (AbsoluteToRelativeUnsigned (id.xy, cubeMapResolution), 0, 1); //z = -1
+	*/
+
+	/*
+	CUBE_Top[id.xy] = PanoramicTexture[id.xy]; //y = 1
+	CUBE_Bottom[id.xy] = PanoramicTexture[id.xy]; //y = -1
+	CUBE_Left[id.xy] = PanoramicTexture[id.xy]; //x = -1
+	CUBE_Right[id.xy] = PanoramicTexture[id.xy]; //x = 1
+	CUBE_Forward[id.xy] = PanoramicTexture[id.xy]; //z = 1
+	CUBE_Backward[id.xy] = PanoramicTexture[id.xy]; //z = -1
+	*/
+
+	// TODO: insert actual code here!
+	//Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+}
+
+
+
+//This kernel converts higher resolution textures to lower resolutoin textures-this allows supersampling.
+//The main reason to keep the texture resolution low is because all the textures MUST, WITHOUT WORKAROUNDS OR MULTITHREADING, BE COPIED BY THE MAIN THREAD BY THE CPU TO A CUBEMAP,
+//which causes HUGE performance losses (like 5 second freeezes) with high resolution textures (8192x2048, 4096x1024).
+//since the bottleneck is on the cpu, the gpu can be pushed a little bit more to improve the quality with a marginal performance loss.
+
+//TL;DR: this kernel converts high res textures to low res textures that have better performance but still good quality.
+
+//High resolution, only readable source textures
+Texture2D<float4> detailed_leftFace;
+Texture2D<float4> detailed_rightFace;
+Texture2D<float4> detailed_forwardFace;
+Texture2D<float4> detailed_backFace;
+Texture2D<float4> detailed_topFace;
+Texture2D<float4> detailed_bottomFace;
+
+//lower resolution, modifiable, output textures
+RWTexture2D<float4> resolved_leftFace;
+RWTexture2D<float4> resolved_rightFace;
+RWTexture2D<float4> resolved_forwardFace;
+RWTexture2D<float4> resolved_backFace;
+RWTexture2D<float4> resolved_topFace;
+RWTexture2D<float4> resolved_bottomFace;
+
+//defined by the cpu, how many times the texture resolution is larger than what we want.
+//output textures are 1/(this) the resolution.
+int superSamplingLevel;
+
+//if value is set to false just copy the textures. This is used if the supersampling level is 1, and allows to skip computation. (set by cpu)
+bool resolve;
+
+//this is a function not a kernel! kernel is below this!
+void ResolveSupersampling (inout Texture2D<float4> detailedTexture, inout RWTexture2D<float4> resolvedTexture, uint3 id, uint2 bottomLeftSamplePosition) {
+	
+	//how many pixels this thread will read in its work area.
+	int numberOfPixels = superSamplingLevel * superSamplingLevel;
+	float4 pixelAverage;
+
+	for (int xOffset = 0; xOffset < superSamplingLevel; xOffset++) {
+		for (int yOffset = 0; yOffset < superSamplingLevel; yOffset++) {
+			int2 offset = int2 (xOffset, yOffset);
+			pixelAverage += detailedTexture[bottomLeftSamplePosition + offset] / (float)numberOfPixels;
+		}
+	}
+
+	resolvedTexture[id.xy] = pixelAverage;
+}
+
+
+
+//actual kernel code, the above one is just a function used to make everything look nicer inside the kernel
+
+[numthreads (2,2,2)]
+void ResolveSupersampling (uint3 id : SV_DispatchThreadID) {
+
+	//this way we determine the bottom left pixel of the area this thread will operate on.
+	uint2 bottomLeftSample = id.xy * superSamplingLevel;
+
+	//each z thread has a face, this splits the load between more threads.
+	if (id.z == 0) {
+		//left
+		//if resolve is set to false just copy the texture. This is used if the supersampling level is 1, and allows to skip computation. (set by cpu)
+		if (resolve) {
+			ResolveSupersampling (detailed_leftFace, resolved_leftFace, id, bottomLeftSample);
+		} else
+			resolved_leftFace[id.xy] = detailed_leftFace[id.xy];
+
+	} else if (id.z == 1) {
+		//right
+		if (resolve) {
+			ResolveSupersampling (detailed_rightFace, resolved_rightFace, id, bottomLeftSample);
+		} else
+			resolved_rightFace[id.xy] = detailed_rightFace[id.xy];
+
+	} else if (id.z == 2) {
+		//forward
+		if (resolve) {
+			ResolveSupersampling (detailed_forwardFace, resolved_forwardFace, id, bottomLeftSample);
+		} else
+			resolved_forwardFace[id.xy] = detailed_forwardFace[id.xy];
+
+	} else if (id.z == 3) {
+		//back
+		if (resolve) {
+			ResolveSupersampling (detailed_backFace, resolved_backFace, id, bottomLeftSample);
+		} else
+			resolved_backFace[id.xy] = detailed_backFace[id.xy];
+
+	} else if (id.z == 4) {
+		//top
+		if (resolve) {
+			ResolveSupersampling (detailed_topFace, resolved_topFace, id, bottomLeftSample);
+		} else
+			resolved_topFace[id.xy] = detailed_topFace[id.xy];
+
+	} else if (id.z == 5) {
+		//bottom
+		if (resolve) {
+			ResolveSupersampling (detailed_bottomFace, resolved_bottomFace, id, bottomLeftSample);
+		} else
+			resolved_bottomFace[id.xy] = detailed_bottomFace[id.xy];
+
+	}
+
+}
+
+
+//[OBSOLETE]
+
+//Textures generated above for the cubemap present "interlacing-like" artifacts. no one wants them, so this kernel filters them.
+// -This was necessary with the old "sphere to cube" system. the new "cube to sphere to cube" system does not produce these artifacts.-
+Texture2D<float4> leftFace;
+Texture2D<float4> rightFace;
+Texture2D<float4> forwardFace;
+Texture2D<float4> backFace;
+
+RWTexture2D<float4> processed_leftFace;
+RWTexture2D<float4> processed_rightFace;
+RWTexture2D<float4> processed_forwardFace;
+RWTexture2D<float4> processed_backFace;
+
+bool filter2;
+
+void DeinterlacingPixelOperations (inout Texture2D<float4> source, inout RWTexture2D<float4> resultTarget, uint3 id) {
+	float4 pixelColor = source[id.xy];
+
+	if (!any (pixelColor)) {//if pixel is not written
+		float4 pixelAbove = source[id.xy + uint2 (0, 1)];
+		float4 pixelBelow = source[id.xy - uint2 (0, 1)];
+		if (any (pixelBelow) && any (pixelAbove)) {
+			resultTarget[id.xy] = (pixelAbove + pixelBelow) / 2.0f;
+		} else
+			resultTarget[id.xy] = float4 (1, 0, 1, 1);
+
+		
+	} else
+		resultTarget[id.xy] = source[id.xy];
+}
+
+[numthreads(8,8,1)]
+void DeinterlaceFaces (uint3 id : SV_DispatchThreadID) {
+	
+	if (filter2) {
+		DeinterlacingPixelOperations (leftFace, processed_leftFace, id);
+		DeinterlacingPixelOperations (rightFace, processed_rightFace, id);
+		DeinterlacingPixelOperations (forwardFace, processed_forwardFace, id);
+		DeinterlacingPixelOperations (backFace, processed_backFace, id);
+	} else {
+		processed_leftFace[id.xy] = leftFace[id.xy];
+		processed_rightFace[id.xy] = rightFace[id.xy];
+		processed_forwardFace[id.xy] = forwardFace[id.xy];
+		processed_backFace[id.xy] = backFace[id.xy];
+	}
+}

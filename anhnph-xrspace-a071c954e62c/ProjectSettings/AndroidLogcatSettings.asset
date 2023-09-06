@@ -1,0 +1,155 @@
+{
+    "m_SelectedDeviceId": "fae55fac",
+    "m_SelectedPackage": {
+        "deviceId": "fae55fac",
+        "name": "com.Istaging.XRSpace",
+        "processId": 16374,
+        "exited": false
+    },
+    "m_SelectedPriority": 0,
+    "m_KnownPackagesForSerialization": [
+        {
+            "deviceId": "fae55fac",
+            "name": "com.xrspace.xrworld",
+            "processId": 9967,
+            "exited": false
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 17530,
+            "exited": true
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 27655,
+            "exited": true
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 29228,
+            "exited": true
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 2384,
+            "exited": true
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 5843,
+            "exited": true
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 8031,
+            "exited": false
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 10411,
+            "exited": false
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 17681,
+            "exited": false
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 20418,
+            "exited": false
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 28706,
+            "exited": false
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 5203,
+            "exited": false
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 4671,
+            "exited": false
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 7559,
+            "exited": false
+        },
+        {
+            "deviceId": "fae55fac",
+            "name": "com.Istaging.XRSpace",
+            "processId": 16374,
+            "exited": false
+        }
+    ],
+    "m_Tags": {
+        "m_Entries": [
+            {
+                "m_Name": "Filter by all listed tags",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "No Filter",
+                "m_Selected": true
+            },
+            {
+                "m_Name": "",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "Tag Control...",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "Unity",
+                "m_Selected": false
+            },
+            {
+                "m_Name": "CRASH",
+                "m_Selected": false
+            }
+        ]
+    },
+    "m_MemoryViewerState": {
+        "MemoryWindowHeight": 300.0,
+        "MemoryWindowWidth": 170.0,
+        "MemoryTypeEnabled": [
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true,
+            true
+        ],
+        "MemoryGroup": 1,
+        "Behavior": 1
+    },
+    "m_Filter": "OnPointer",
+    "m_FilterIsRegularExpression": false,
+    "m_SymbolPaths": []
+}

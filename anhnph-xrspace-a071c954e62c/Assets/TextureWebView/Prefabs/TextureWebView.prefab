@@ -1,0 +1,150 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &174526
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 476318}
+  - 114: {fileID: 11454188}
+  m_Layer: 0
+  m_Name: TextureWebView
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &476318
+Transform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 174526}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+--- !u!114 &11454188
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 174526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bad016bb70440e43a0a4da64cfad6d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _outputObject: {fileID: 0}
+  _inputCamera: {fileID: 0}
+  _eventSystem: {fileID: 0}
+  _useHtmlContent: 0
+  _data: 
+  _showMainOptions: 0
+  _viewSize: {x: 480, y: 800}
+  _useScreenSize: 0
+  _useObjectSize: 0
+  _autoLoad: 0
+  _deviceKeyboard: 0
+  _inputSystem: 1
+  _debugRay: 0
+  _touchController: 0
+  _showLayers: 0
+  _exclusionLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  _useGaze: 0
+  _gaze: {fileID: 0}
+  _gazeSubmitTime: 0
+  _gazeSensitivity: 0
+  _showEventsOptions: 0
+  _pageStartedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: TextureWebView+StringType, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  _pageLoadingEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: TextureWebView+LoadingType, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  _pageFinishedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: TextureWebView+StringType, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  _pageImageReadyEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: TextureWebView+ImageReadyType, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  _pageConsoleMessageEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: TextureWebView+StringType, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  _pageErrorEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: TextureWebView+StringType, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  _pageHttpErrorEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: TextureWebView+StringType, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  _errorEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: TextureWebView+StringType, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  _motionEvents:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: TextureWebView+MotionType, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  _showAboutOption: 0
+--- !u!1001 &100100000
+Prefab:
+  m_ObjectHideFlags: 1
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _data
+      value: https://www.google.com
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _viewSize.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _viewSize.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _inputSystem
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _debugRay
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _useGaze
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _gazeSensitivity
+      value: 0.1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_ParentPrefab: {fileID: 0}
+  m_RootGameObject: {fileID: 174526}
+  m_IsPrefabParent: 1

@@ -1,0 +1,255 @@
+fileFormatVersion: 2
+guid: b620879d85cd9ad4c8aaac720dc4d54c
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: //RootNode
+    100002: _home1_aquarium_videoscreen
+    100004: _home1_tv_videoscreen
+    100006: block_sun1
+    100008: emission_obj
+    100010: fabric_quilt_01
+    100012: home_ceilinglight1
+    100014: home_concrete_grey1
+    100016: home_fabric_black1
+    100018: home_fabric_pillow1
+    100020: home_fabric_yellow1
+    100022: home_Ground
+    100024: home_metal_bronze1
+    100026: home_metal_white1
+    100028: home_rock_black1
+    100030: home_rock_colorful1
+    100032: home_umbrella1
+    100034: Home_Vent.001
+    100036: home_wallpaint_blue1
+    100038: home_wallpaint_grey1
+    100040: home_wallpaint_white1
+    100042: home_wood_brown1
+    100044: home_wood_floor1
+    100046: home_wood_lightbrown1
+    100048: home_wood_lightyellow1
+    100050: home_wood_yellow1
+    100052: metal_black_01
+    100054: tex_components_01
+    400000: //RootNode
+    400002: _home1_aquarium_videoscreen
+    400004: _home1_tv_videoscreen
+    400006: block_sun1
+    400008: emission_obj
+    400010: fabric_quilt_01
+    400012: home_ceilinglight1
+    400014: home_concrete_grey1
+    400016: home_fabric_black1
+    400018: home_fabric_pillow1
+    400020: home_fabric_yellow1
+    400022: home_Ground
+    400024: home_metal_bronze1
+    400026: home_metal_white1
+    400028: home_rock_black1
+    400030: home_rock_colorful1
+    400032: home_umbrella1
+    400034: Home_Vent.001
+    400036: home_wallpaint_blue1
+    400038: home_wallpaint_grey1
+    400040: home_wallpaint_white1
+    400042: home_wood_brown1
+    400044: home_wood_floor1
+    400046: home_wood_lightbrown1
+    400048: home_wood_lightyellow1
+    400050: home_wood_yellow1
+    400052: metal_black_01
+    400054: tex_components_01
+    2100000: Block
+    2100002: wall_white
+    2100004: wall_white.001
+    2100006: fabric_black
+    2100008: wall_concrete
+    2100010: wood tile_ground
+    2100012: metal_brown
+    2100014: stone_tile ground
+    2100016: garden_grass groud
+    2100018: fabric_pillow
+    2100020: fabric_yellow
+    2100022: plastic_white
+    2100024: stone_fire
+    2100026: wall_blue
+    2100028: wood_brown01
+    2100030: wood tile_outside
+    2100032: video screen
+    2100034: fabric_quilt
+    2100036: wood_yellow
+    2100038: plastic_grey
+    2100040: metal_black
+    2100042: emission_obj
+    2100044: pasted__components
+    2100046: wood_brown
+    2100048: Cieling_light
+    2100050: Vent_Normal_Test
+    2100052: umbrella_white
+    2300000: _home1_aquarium_videoscreen
+    2300002: _home1_tv_videoscreen
+    2300004: block_sun1
+    2300006: emission_obj
+    2300008: fabric_quilt_01
+    2300010: home_ceilinglight1
+    2300012: home_concrete_grey1
+    2300014: home_fabric_black1
+    2300016: home_fabric_pillow1
+    2300018: home_fabric_yellow1
+    2300020: home_Ground
+    2300022: home_metal_bronze1
+    2300024: home_metal_white1
+    2300026: home_rock_black1
+    2300028: home_rock_colorful1
+    2300030: home_umbrella1
+    2300032: Home_Vent.001
+    2300034: home_wallpaint_blue1
+    2300036: home_wallpaint_grey1
+    2300038: home_wallpaint_white1
+    2300040: home_wood_brown1
+    2300042: home_wood_floor1
+    2300044: home_wood_lightbrown1
+    2300046: home_wood_lightyellow1
+    2300048: home_wood_yellow1
+    2300050: metal_black_01
+    2300052: tex_components_01
+    3300000: _home1_aquarium_videoscreen
+    3300002: _home1_tv_videoscreen
+    3300004: block_sun1
+    3300006: emission_obj
+    3300008: fabric_quilt_01
+    3300010: home_ceilinglight1
+    3300012: home_concrete_grey1
+    3300014: home_fabric_black1
+    3300016: home_fabric_pillow1
+    3300018: home_fabric_yellow1
+    3300020: home_Ground
+    3300022: home_metal_bronze1
+    3300024: home_metal_white1
+    3300026: home_rock_black1
+    3300028: home_rock_colorful1
+    3300030: home_umbrella1
+    3300032: Home_Vent.001
+    3300034: home_wallpaint_blue1
+    3300036: home_wallpaint_grey1
+    3300038: home_wallpaint_white1
+    3300040: home_wood_brown1
+    3300042: home_wood_floor1
+    3300044: home_wood_lightbrown1
+    3300046: home_wood_lightyellow1
+    3300048: home_wood_yellow1
+    3300050: metal_black_01
+    3300052: tex_components_01
+    4300000: block_sun1
+    4300002: home_wallpaint_white1
+    4300004: home_fabric_black1
+    4300006: home_concrete_grey1
+    4300008: home_wood_floor1
+    4300010: home_metal_bronze1
+    4300012: home_rock_black1
+    4300014: home_Ground
+    4300016: home_fabric_pillow1
+    4300018: home_fabric_yellow1
+    4300020: home_metal_white1
+    4300022: home_rock_colorful1
+    4300024: home_wallpaint_blue1
+    4300026: home_wood_lightbrown1
+    4300028: home_wood_yellow1
+    4300030: _home1_aquarium_videoscreen
+    4300032: _home1_tv_videoscreen
+    4300034: fabric_quilt_01
+    4300036: home_wood_lightyellow1
+    4300038: home_wallpaint_grey1
+    4300040: metal_black_01
+    4300042: emission_obj
+    4300044: tex_components_01
+    4300046: home_wood_brown1
+    4300048: home_ceilinglight1
+    4300050: Home_Vent.001
+    4300052: home_umbrella1
+  externalObjects: {}
+  materials:
+    importMaterials: 0
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 0
+    importBlendShapes: 0
+    importCameras: 0
+    importLights: 0
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 1
+    hasPreviousCalculatedGlobalScale: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 0
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
